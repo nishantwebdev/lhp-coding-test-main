@@ -16,7 +16,7 @@ class EventSeeder extends Seeder
 
     public const NUM_USERS = 3000;
 
-    private const CHUNK = 4000;
+    private const CHUNK = 1000;
 
     /** Event categories (stored in the `type` column). */
     private const TYPES = ['concert', 'conference', 'meetup', 'workshop', 'festival', 'sports', 'networking', 'exhibition'];
@@ -125,6 +125,16 @@ class EventSeeder extends Seeder
                     .' '.self::NAME_THEMES[array_rand(self::NAME_THEMES)]
                     .' '.self::NAME_FORMATS[array_rand(self::NAME_FORMATS)];
 
+                // Randomly select 2-5 images from the pool of 10 images.
+                $numImages = mt_rand(2, 5);
+                $imageKeys = array_rand(range(1, 10), $numImages);
+                $images = [];
+                foreach ((array) $imageKeys as $key) {
+                    // to reduce the size of payload, we only store the image name.
+                    // and it will be prepended with the image path in the Event model.
+                    $images[] = ($key + 1) . '.jpg';
+                }
+
                 $payload = strtr($template, [
                     '{{NAME}}' => $this->escape($name),
                     '{{CATEGORY}}' => $type,
@@ -136,6 +146,7 @@ class EventSeeder extends Seeder
                     '{{ENDS}}' => (string) $endsAt,
                     '{{CAPACITY}}' => (string) mt_rand(20, 50000),
                     '{{PRICE}}' => (string) (mt_rand(0, 25000) / 100),
+                    '"{{IMAGES_TOKEN}}"' => json_encode($images, JSON_UNESCAPED_SLASHES), // Convert array to JSON string
                 ]);
 
                 $batch[] = [
@@ -230,6 +241,7 @@ class EventSeeder extends Seeder
                 'currency' => 'USD',
                 'min_price' => '{{PRICE}}',
             ],
+            'images' => '{{IMAGES_TOKEN}}',
             'tags' => ['live', 'in-person', 'featured', 'all-ages'],
             'notes' => '',
         ];

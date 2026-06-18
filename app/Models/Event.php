@@ -25,8 +25,23 @@ class Event extends Model
         return (string) Str::uuid();
     }
 
+    /**
+     * The path to the images directory.
+     */
+    public const IMAGE_PATH = 'storage/images/events/';
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the images for the event with their full URLs.
+     */
+    public function getImagesWithUrl(): array
+    {
+        $images = $this->payload['images'] ?? [];
+
+        return array_map(fn ($image) => asset(self::IMAGE_PATH . $image), $images);
     }
 }
