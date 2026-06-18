@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'geocoder' => [
+        'provider' => env('GEOCODING_PROVIDER', 'google'),
+        'google' => [
+            'api_key' => env('GOOGLE_MAPS_API_KEY'),
+        ],
+        'nominatim' => [
+            'client_id' => env('NOMINATIM_CLIENT_ID'),
+            'secret' => env('NOMINATIM_SECRET'),
+        ],
+    ],
+
 ];
