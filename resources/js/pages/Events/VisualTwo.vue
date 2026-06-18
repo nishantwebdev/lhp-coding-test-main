@@ -5,6 +5,7 @@ import { useDebounceFn } from '@vueuse/core';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, Crosshair, Search, Building } from '@lucide/vue';
+import EventDetailsModal from '@/components/EventDetailsModal.vue';
 
 const LOCATIONS = [
     {
@@ -92,6 +93,14 @@ const imagePrefix = ref('');
 
 const sentinel = ref<HTMLElement | null>(null);
 let observer: IntersectionObserver | null = null;
+
+const isModalOpen = ref(false);
+const selectedEvent = ref<any>(null);
+
+function openModal(event: any) {
+    selectedEvent.value = event;
+    isModalOpen.value = true;
+}
 
 const hasMore = computed(() => lastPage.value === null || page.value < lastPage.value);
 
@@ -317,9 +326,9 @@ onBeforeUnmount(() => {
                         <div class="absolute left-6 md:left-1/2 w-4 h-4 rounded-full bg-background border-4 border-primary transform -translate-x-1/2 z-20 group-hover:scale-150 group-hover:bg-primary transition-all duration-300"></div>
 
                         <!-- Card Container -->
-                        <div class="w-full md:w-1/2 pl-16 md:pl-0" :class="index % 2 === 0 ? 'md:pr-16 text-left md:text-right' : 'md:pl-16 text-left'">
-                            <Link :href="`/events/${event.id}`" class="block outline-none">
-                                <div class="rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 bg-card border border-border/50 hover:border-primary/50 group-hover:-translate-y-2 group-focus-visible:ring-2 ring-primary">
+                        <div class="w-full md:w-1/2 pl-16 md:pl-0" :class="index % 2 === 0 ? 'md:pr-16 text-left' : 'md:pl-16 text-left'">
+                            <div class="w-full text-left">
+                                <div class="rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 bg-card border border-border/50 hover:border-primary/50 group-hover:-translate-y-2">
                                     <div class="aspect-[16/9] w-full overflow-hidden relative">
                                         <img :src="getImageUrl(event)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" />
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
@@ -336,21 +345,24 @@ onBeforeUnmount(() => {
                                         <div class="absolute top-0 right-6 transform -translate-y-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold shadow-lg shadow-primary/30">
                                             {{ event.payload?.pricing?.currency || 'USD' }} {{ event.payload?.pricing?.min_price || 'Free' }}
                                         </div>
-                                        <div class="flex items-center gap-3 text-sm text-muted-foreground" :class="index % 2 === 0 ? 'md:justify-end md:flex-row-reverse' : ''">
+                                        <div class="flex items-center gap-3 text-sm text-muted-foreground">
                                             <Calendar class="h-4 w-4 shrink-0 text-primary" />
                                             <span>{{ formatTime(event.created_time) }}</span>
                                         </div>
-                                        <div class="flex items-center gap-3 text-sm text-muted-foreground" :class="index % 2 === 0 ? 'md:justify-end md:flex-row-reverse' : ''">
+                                        <div class="flex items-center gap-3 text-sm text-muted-foreground">
                                             <Building class="h-4 w-4 shrink-0 text-primary" />
                                             <span class="line-clamp-1">{{ event.payload?.venue?.name || 'Unknown Venue' }}</span>
                                         </div>
-                                        <div v-if="event.payload?.venue?.address" class="flex items-center gap-3 text-sm text-muted-foreground" :class="index % 2 === 0 ? 'md:justify-end md:flex-row-reverse' : ''">
+                                        <div v-if="event.payload?.venue?.address" class="flex items-center gap-3 text-sm text-muted-foreground">
                                             <MapPin class="h-4 w-4 shrink-0 text-primary" />
                                             <span class="line-clamp-1">{{ event.payload.venue.address }}</span>
                                         </div>
+                                        <div class="pt-4 flex">
+                                            <Button @click.stop="openModal(event)" variant="default" class="rounded-full px-6 transition-transform hover:scale-105 cursor-pointer">View Details</Button>
+                                        </div>
                                     </div>
                                 </div>
-                            </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -368,5 +380,11 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </div>
+        
+        <EventDetailsModal
+            v-model:isOpen="isModalOpen"
+            :event="selectedEvent"
+            :imagePrefix="imagePrefix || '/storage/images/events/'"
+        />
     </div>
 </template>

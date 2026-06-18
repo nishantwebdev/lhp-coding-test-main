@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, Clock, Crosshair, Building } from '@lucide/vue';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import EventDetailsModal from '@/components/EventDetailsModal.vue';
 
 const customIcon = L.icon({
     iconUrl: '/images/leaflet/marker-icon-2x.png',
@@ -106,6 +107,14 @@ let observer: IntersectionObserver | null = null;
 const mapContainer = ref<HTMLElement | null>(null);
 let map: L.Map | null = null;
 let markers: L.Marker[] = [];
+
+const isModalOpen = ref(false);
+const selectedEvent = ref<any>(null);
+
+function openModal(event: any) {
+    selectedEvent.value = event;
+    isModalOpen.value = true;
+}
 
 const hasMore = computed(() => lastPage.value === null || page.value < lastPage.value);
 
@@ -357,7 +366,7 @@ onBeforeUnmount(() => {
                     <div 
                         v-for="event in rows" 
                         :key="event.id"
-                        class="group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                        class="group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 "
                         @mouseenter="focusEventOnMap(event)"
                     >
                         <div class="relative h-48 w-full bg-muted overflow-hidden">
@@ -390,7 +399,7 @@ onBeforeUnmount(() => {
                                 <span class="font-medium text-primary">
                                     {{ event.payload?.pricing?.currency || 'USD' }} {{ event.payload?.pricing?.min_price || 'Free' }}
                                 </span>
-                                <Link :href="`/events/${event.id}`" class="text-sm font-medium hover:underline">Details &rarr;</Link>
+                                <button type="button" @click.stop="openModal(event)" class="text-sm font-medium hover:underline text-primary cursor-pointer">Details</button>
                             </div>
                         </div>
                     </div>
@@ -413,5 +422,11 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </div>
+        
+        <EventDetailsModal
+            v-model:isOpen="isModalOpen"
+            :event="selectedEvent"
+            :imagePrefix="imagePrefix || '/storage/images/events/'"
+        />
     </div>
 </template>

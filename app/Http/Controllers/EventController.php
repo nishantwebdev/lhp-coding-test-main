@@ -52,7 +52,7 @@ class EventController extends Controller
     {
         $start = microtime(true);
 
-        $query = Event::with('user');
+        $query = Event::with('user')->withCount('attendees');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
