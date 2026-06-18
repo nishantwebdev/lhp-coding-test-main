@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 class NominatimGeocoder implements GeocoderInterface
 {
     protected ?string $clientId;
+
     protected ?string $secret;
 
     public function __construct()
@@ -27,7 +28,7 @@ class NominatimGeocoder implements GeocoderInterface
                 'format' => 'json',
             ];
 
-            // Some premium Nominatim-based services use client_id and secret, 
+            // Some premium Nominatim-based services use client_id and secret,
             // or we just append them if present.
             if ($this->clientId) {
                 $query['client_id'] = $this->clientId;
@@ -37,7 +38,7 @@ class NominatimGeocoder implements GeocoderInterface
             }
 
             // A user-agent is strictly required by the public Nominatim API
-            $userAgent = config('app.name', 'Laravel') . ' ReverseGeocoder';
+            $userAgent = config('app.name', 'Laravel').' ReverseGeocoder';
 
             $response = Http::withoutVerifying()->withHeaders([
                 'User-Agent' => $userAgent,
@@ -45,15 +46,15 @@ class NominatimGeocoder implements GeocoderInterface
 
             if ($response->successful()) {
                 $data = $response->json();
-                
-                if (!empty($data['display_name'])) {
+                // info('Nominatim Geocoder response:', $data);
+                if (! empty($data['display_name'])) {
                     return $data['display_name'];
                 }
             } else {
                 Log::error('Nominatim Geocoder failed', ['status' => $response->status(), 'response' => $response->body()]);
             }
         } catch (\Exception $e) {
-            Log::error('Nominatim Geocoder exception: ' . $e->getMessage());
+            Log::error('Nominatim Geocoder exception: '.$e->getMessage());
         }
 
         return null;

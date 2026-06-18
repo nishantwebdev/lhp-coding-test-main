@@ -4,10 +4,11 @@ use App\Jobs\GeocodeEventsJob;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\Geocoding\GeocoderInterface;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 it('dispatches a geocoding job when an event is created with coordinates', function () {
     Queue::fake();
@@ -20,7 +21,7 @@ it('dispatches a geocoding job when an event is created with coordinates', funct
         'longitude' => -74.0060,
     ]);
 
-    Queue::assertPushed(GeocodeEventsJob::class, function ($job) use ($event) {
+    Queue::assertPushed(GeocodeEventsJob::class, function ($job) {
         // We can inspect the array via reflection if needed, but simple class assertion is fine
         return true;
     });
@@ -65,7 +66,7 @@ it('does not dispatch a job if coordinates are not changed', function () {
 
     // Update something else
     $event->update([
-        'payload' => array_merge($event->payload ?? [], ['title' => 'Updated Title'])
+        'payload' => array_merge($event->payload ?? [], ['title' => 'Updated Title']),
     ]);
 
     Queue::assertNotPushed(GeocodeEventsJob::class);
@@ -93,5 +94,5 @@ it('updates the event payload with the resolved address', function () {
 
     $event->refresh();
 
-    expect($event->payload)->toHaveKey('address', '123 Mock Street, Fake City, NY');
+    expect($event->payload['venue'])->toHaveKey('address', '123 Mock Street, Fake City, NY');
 });

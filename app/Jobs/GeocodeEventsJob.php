@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class GeocodeEventsJob implements ShouldQueue
@@ -50,9 +51,12 @@ class GeocodeEventsJob implements ShouldQueue
 
                 if ($address) {
                     // Use a transaction with 3 retries in case the SQLite database is locked
-                    \Illuminate\Support\Facades\DB::transaction(function () use ($event, $address) {
+                    DB::transaction(function () use ($event, $address) {
                         $payload = $event->payload ?? [];
-                        $payload['address'] = $address;
+                        if (! isset($payload['venue'])) {
+                            $payload['venue'] = [];
+                        }
+                        $payload['venue']['address'] = $address;
                         $event->payload = $payload;
 
                         // Use saveQuietly to prevent triggering the Observer and creating an infinite loop
@@ -63,7 +67,7 @@ class GeocodeEventsJob implements ShouldQueue
                 // Sleep for 0.5 seconds to respect geocoding API rate limits
                 usleep(500000);
             } catch (\Exception $e) {
-                Log::error("Failed to geocode event {$event->id}: " . $e->getMessage());
+                Log::error("Failed to geocode event {$event->id}: ".$e->getMessage());
             }
         }
     }

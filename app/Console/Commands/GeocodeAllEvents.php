@@ -30,24 +30,25 @@ class GeocodeAllEvents extends Command
         $this->info('Starting to dispatch geocoding jobs...');
 
         $eventsQuery = Event::whereNotNull('latitude')
-            ->whereNotNull('longitude');
+            ->whereNotNull('longitude')
+            ->whereNull('payload->venue->address')
+            ->orderByDesc('created_time');
 
         $limit = $this->option('limit');
 
-        // Note: Using chunkById is more memory efficient for large tables
         $count = 0;
-        $eventsQuery->chunkById(100, function ($events) use (&$count, $limit) {
+        $eventsQuery->chunk(100, function ($events) use (&$count, $limit) {
             if ($limit && ($count + $events->count()) > $limit) {
                 $events = $events->take($limit - $count);
             }
 
             $eventIds = $events->pluck('id')->toArray();
             GeocodeEventsJob::dispatch($eventIds);
-            
+
             foreach ($eventIds as $eventId) {
                 $this->line("Dispatched event ID: {$eventId}");
             }
-            
+
             $count += count($eventIds);
             $this->info("Total dispatched so far: $count events...");
 
